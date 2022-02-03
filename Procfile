@@ -1,1 +1,1 @@
-worker: bash Rangerbot
+worker: python3 Ranger.py
