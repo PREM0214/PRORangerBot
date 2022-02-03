@@ -63,17 +63,21 @@ async def vnc(e):
     await bash(
         f"ffmpeg -i '{file.name}' -map 0:a -codec:a libopus -b:a 100k -vbr on out.opus"
     )
-    await e.client.send_message(
-        e.chat_id, file="out.opus", force_document=False, reply_to=r
-    )
+    try:
+        await e.client.send_message(
+            e.chat_id, file="out.opus", force_document=False, reply_to=r
+        )
+    except Exception as er:
+        LOGS.exception(er)
+        return await xxx.edit("`Failed to convert in Voice...`")
     await xxx.delete()
     os.remove(file.name)
     os.remove("out.opus")
 
 
-@ultroid_cmd(pattern="atrim ?(.*)")
+@ultroid_cmd(pattern="atrim( (.*)|$)")
 async def trim_aud(e):
-    sec = e.pattern_match.group(1)
+    sec = e.pattern_match.group(1).strip()
     if not sec or "-" not in sec:
         return await eod(e, get_string("audiotools_3"))
     a, b = sec.split("-")

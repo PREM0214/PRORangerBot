@@ -24,10 +24,10 @@ from telethon.tl.types import InputMessagesFilterPhotos
 from . import OWNER_ID, OWNER_NAME, download_file, get_string, mediainfo, ultroid_cmd
 
 
-@ultroid_cmd(pattern="logo ?(.*)")
+@ultroid_cmd(pattern="logo( (.*)|$)")
 async def logo_gen(event):
     xx = await event.eor(get_string("com_1"))
-    name = event.pattern_match.group(1)
+    name = event.pattern_match.group(1).strip()
     if not name:
         await xx.eor("`Give a name too!`", time=5)
     bg_, font_ = None, None

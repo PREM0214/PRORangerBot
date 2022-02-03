@@ -36,7 +36,6 @@ from . import (
     get_random_user_data,
     get_string,
     re,
-    requests,
     ultroid_cmd,
 )
 
@@ -49,21 +48,28 @@ def gib_link(link):
     return _base + f"https%3A%2F%2Fpin.it%2F{link}"
 
 
-@ultroid_cmd(pattern="eod ?(.*)")
+@ultroid_cmd(pattern="eod( (.*)|$)")
 async def diela(e):
-    match = e.pattern_match.group(1)
+    match = e.pattern_match.group(1).strip()
     m = await e.eor(get_string("com_1"))
     li = "https://daysoftheyear.com"
     te = "🎊 **Events of the Day**\n\n"
     if match:
         date = match.split("/")[0]
         month = match.split("/")[1]
-        li += "/days/2021-2022/" + month + "/" + date
+        if month.startswith("0"):
+            month = month[:1]
+        try:
+            month = list(calendar.month_name)[int(month)][:3]
+        except (KeyError, TypeError):
+            month = dt.today().strftime("%b")
+        li += "/days/" + month + "/" + date
         te = get_string("eod_2").format(match)
     else:
-        da = datetime.today().strftime("%F").split("-")
-        li += "/days/2021-2022/" + da[1] + "/" + da[2]
-    ct = requests.get(li).content
+        da = datetime.today()
+        month = da.strftime("%b")
+        li += "/days/" + month + "/" + da.strftime("%F").split("-")[2]
+    ct = await async_searcher(li, re_content=True)
     bt = bs(ct, "html.parser", from_encoding="utf-8")
     ml = bt.find_all("a", "js-link-target", href=re.compile("daysoftheyear.com/days"))
     for eve in ml[:5]:
@@ -72,10 +78,10 @@ async def diela(e):
 
 
 @ultroid_cmd(
-    pattern="pntrst ?(.*)",
+    pattern="pntrst( (.*)|$)",
 )
 async def pinterest(e):
-    m = e.pattern_match.group(1)
+    m = e.pattern_match.group(1).strip()
     if not m:
         return await e.eor("`Give pinterest link.`", time=3)
     scrape = cfscrape.create_scraper()
@@ -94,9 +100,9 @@ async def pinterest(e):
         await e.client.send_file(e.chat_id, hulu[0]["href"], caption=f"Pin:- {m}")
 
 
-@ultroid_cmd(pattern="gadget ?(.*)")
+@ultroid_cmd(pattern="gadget( (.*)|$)")
 async def mobs(e):
-    mat = e.pattern_match.group(1)
+    mat = e.pattern_match.group(1).strip()
     if not mat:
         await e.eor("Please Give a Mobile Name to look for.")
     query = mat.replace(" ", "%20")
@@ -138,14 +144,18 @@ async def _gen_data(event):
 
 
 @ultroid_cmd(
-    pattern="ascii ?(.*)",
+    pattern="ascii( (.*)|$)",
 )
 async def _(e):
     if not e.reply_to_msg_id:
         return await e.eor(get_string("ascii_1"))
     m = await e.eor(get_string("ascii_2"))
     img = await (await e.get_reply_message()).download_media()
-    char = "■" if not e.pattern_match.group(1) else e.pattern_match.group(1)
+    char = (
+        "■"
+        if not e.pattern_match.group(1).strip()
+        else e.pattern_match.group(1).strip()
+    )
     converter = Img2HTMLConverter(char=char)
     html = converter.convert(img)
     shot = WebShot(quality=85)
